@@ -1,374 +1,463 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitness & Diet Tracking Platform</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fitness & Diet Tracker</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React and ReactDOM via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <!-- Babel for JSX -->
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        /* CSS Styles */
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-            color: #333;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .hidden {
-            display: none;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input, select, button {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            cursor: pointer;
-            border: none;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .dashboard {
-            display: flex;
-            justify-content: space-around;
-            margin: 20px 0;
-        }
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            width: 30%;
-            text-align: center;
-        }
-        .meal-log {
-            margin: 20px 0;
-        }
-        .meal-section {
-            background: white;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 8px;
-        }
-        .report {
-            background: white;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 8px;
-        }
-        .google-btn {
-            background-color: #4285f4;
-            color: white;
-            text-align: center;
-            padding: 12px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .google-btn:hover {
-            background-color: #357ae8;
-        }
+      body {
+        font-family: "Roboto", sans-serif;
+      }
+      .btn-hover {
+        transition: transform 0.2s ease-in-out;
+      }
+      .btn-hover:hover {
+        transform: scale(1.05);
+      }
+      .modal-backdrop {
+        transition: opacity 0.3s ease-in-out;
+      }
+      .error-text {
+        color: red;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+      }
     </style>
-</head>
-<body>
-    <div class="container">
-        <!-- Login Page -->
-        <div id="loginPage">
-            <h1>Welcome to Fitness & Diet Tracker</h1>
-            <p>Sign in with Google to get started.</p>
-            <button class="google-btn" onclick="googleLogin()">Sign in with Google</button>
-        </div>
+  </head>
+  <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div id="root"></div>
 
-        <!-- Registration Page -->
-        <div id="registerPage" class="hidden">
-            <h2>Complete Your Profile</h2>
-            <form id="registerForm">
-                <div class="form-group">
-                    <label for="name">Full Name:</label>
-                    <input type="text" id="name" required>
-                </div>
-                <div class="form-group">
-                    <label for="gender">Gender:</label>
-                    <select id="gender" required>
-                        <option value="">Select Gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="age">Age:</label>
-                    <input type="number" id="age" min="1" max="120" required>
-                </div>
-                <div class="form-group">
-                    <label for="height">Height (cm):</label>
-                    <input type="number" id="height" min="1" required>
-                </div>
-                <div class="form-group">
-                    <label for="weight">Weight (kg):</label>
-                    <input type="number" id="weight" min="1" required>
-                </div>
-                <button type="submit">Register & Continue</button>
-            </form>
-        </div>
+    <script type="text/babel">
+      const { useState, useEffect } = React;
 
-        <!-- Main Dashboard -->
-        <div id="dashboard" class="hidden">
-            <h1>Dashboard - Welcome, <span id="userName"></span>!</h1>
-            <div class="dashboard">
-                <div class="card">
-                    <h3>Track Fitness</h3>
-                    <button onclick="showFitness()">Log Workout</button>
-                </div>
-                <div class="card">
-                    <h3>Track Diet</h3>
-                    <button onclick="showDiet()">Log Meals</button>
-                </div>
-                <div class="card">
-                    <h3>View Reports</h3>
-                    <button onclick="showReports()">Analytics</button>
-                </div>
-            </div>
-            <button onclick="logout()">Logout</button>
-        </div>
-
-        <!-- Fitness Tracking -->
-        <div id="fitnessPage" class="hidden">
-            <h2>Log Workout</h2>
-            <div class="form-group">
-                <label for="workoutType">Workout Type:</label>
-                <select id="workoutType">
-                    <option value="running">Running (cal/hour: 600)</option>
-                    <option value="weightlifting">Weightlifting (cal/hour: 400)</option>
-                    <option value="yoga">Yoga (cal/hour: 300)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="duration">Duration (minutes):</label>
-                <input type="number" id="duration" min="1">
-            </div>
-            <button onclick="logWorkout()">Log & Calculate Burn</button>
-            <p id="burnResult"></p>
-            <button onclick="backToDashboard()">Back to Dashboard</button>
-        </div>
-
-        <!-- Diet Tracking -->
-        <div id="dietPage" class="hidden">
-            <h2>Log Daily Meals</h2>
-            <div class="meal-log">
-                <div class="meal-section">
-                    <h3>Morning (Breakfast)</h3>
-                    <input type="text" id="morningFood" placeholder="e.g., Oatmeal - 300 cal">
-                    <input type="number" id="morningCal" placeholder="Calories" min="0">
-                </div>
-                <div class="meal-section">
-                    <h3>Afternoon (Lunch)</h3>
-                    <input type="text" id="afternoonFood" placeholder="e.g., Salad - 400 cal">
-                    <input type="number" id="afternoonCal" placeholder="Calories" min="0">
-                </div>
-                <div class="meal-section">
-                    <h3>Night (Dinner)</h3>
-                    <input type="text" id="nightFood" placeholder="e.g., Grilled Chicken - 500 cal">
-                    <input type="number" id="nightCal" placeholder="Calories" min="0">
-                </div>
-            </div>
-            <button onclick="logMeals()">Log Meals & Calculate Total Intake</button>
-            <p id="intakeResult"></p>
-            <button onclick="backToDashboard()">Back to Dashboard</button>
-        </div>
-
-        <!-- Reports -->
-        <div id="reportsPage" class="hidden">
-            <h2>Daily Analytics</h2>
-            <div class="report">
-                <p><strong>User Profile:</strong></p>
-                <p id="profileInfo"></p>
-                <p><strong>Daily Calorie Intake:</strong> <span id="totalIntake">0</span> cal</p>
-                <p><strong>Calories Burned (Workout + BMR):</strong> <span id="totalBurn">0</span> cal</p>
-                <p><strong>Net Calories:</strong> <span id="netCalories">0</span> cal</p>
-                <p id="bmrInfo">BMR not calculated yet.</p>
-            </div>
-            <button onclick="calculateBMR()">Calculate BMR</button>
-            <button onclick="backToDashboard()">Back to Dashboard</button>
-            <button onclick="updateGoals()">Update Goals</button>
-        </div>
-
-        <!-- Goals Update -->
-        <div id="goalsPage" class="hidden">
-            <h2>Update Goals</h2>
-            <p>Current Weight: <span id="currentWeight"></span> kg</p>
-            <div class="form-group">
-                <label for="goalWeight">Goal Weight (kg):</label>
-                <input type="number" id="goalWeight" min="1">
-            </div>
-            <button onclick="saveGoals()">Save Goals</button>
-            <button onclick="backToDashboard()">Back to Dashboard</button>
-        </div>
-    </div>
-
-    <script>
-        // JavaScript Logic
-        let userData = {
-            name: '',
-            gender: '',
-            age: 0,
-            height: 0,
-            weight: 0,
-            goalWeight: 0,
-            dailyIntake: 0,
-            dailyBurn: 0,
-            bmr: 0
-        };
-        let isLoggedIn = false;
-        let workoutCalories = 0; // From fitness log
-
-        // Mock Google Login (In real app, use Google OAuth API)
-        function googleLogin() {
-            // Simulate successful login with mock user data
-            alert('Google login successful! (Mock - In production, integrate Google Sign-In API)');
-            document.getElementById('loginPage').classList.add('hidden');
-            document.getElementById('registerPage').classList.remove('hidden');
-        }
-
-        // Handle Registration
-        document.getElementById('registerForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            userData.name = document.getElementById('name').value;
-            userData.gender = document.getElementById('gender').value;
-            userData.age = parseInt(document.getElementById('age').value);
-            userData.height = parseInt(document.getElementById('height').value);
-            userData.weight = parseInt(document.getElementById('weight').value);
-            userData.goalWeight = userData.weight; // Default to current
-
-            alert('Registration successful!');
-            showDashboard();
+      const FitnessDashboard = () => {
+        const [userData, setUserData] = useState({
+          caloriesIn: 1800,
+          caloriesOut: 2200,
+          weight: 72.5,
+          steps: 8500,
+          weightHistory: [
+            { date: "2025-10-01", weight: 74 },
+            { date: "2025-10-02", weight: 73.5 },
+            { date: "2025-10-03", weight: 73 },
+            { date: "2025-10-04", weight: 72.8 },
+            { date: "2025-10-05", weight: 72.5 },
+            { date: "2025-10-06", weight: 72.2 },
+            { date: "2025-10-07", weight: 72 },
+            { date: "2025-10-08", weight: 71.8 },
+          ],
         });
 
-        function showDashboard() {
-            document.getElementById('registerPage').classList.add('hidden');
-            document.getElementById('dashboard').classList.remove('hidden');
-            document.getElementById('userName').textContent = userData.name;
-        }
+        const [showWorkoutModal, setShowWorkoutModal] = useState(false);
+        const [showMealModal, setShowMealModal] = useState(false);
+        const [workoutForm, setWorkoutForm] = useState({
+          name: "",
+          duration: "",
+          calories: "",
+        });
+        const [mealForm, setMealForm] = useState({
+          name: "",
+          calories: "",
+          carbs: "",
+          protein: "",
+          fat: "",
+        });
+        const [logs, setLogs] = useState([]);
+        const [error, setError] = useState("");
 
-        function showFitness() {
-            hideAllPages();
-            document.getElementById('fitnessPage').classList.remove('hidden');
-        }
-
-        function showDiet() {
-            hideAllPages();
-            document.getElementById('dietPage').classList.remove('hidden');
-        }
-
-        function showReports() {
-            hideAllPages();
-            document.getElementById('reportsPage').classList.remove('hidden');
-            updateReports();
-        }
-
-        function hideAllPages() {
-            const pages = ['dashboard', 'fitnessPage', 'dietPage', 'reportsPage', 'goalsPage'];
-            pages.forEach(page => {
-                document.getElementById(page).classList.add('hidden');
+        useEffect(() => {
+          try {
+            const ctx = document.getElementById("weightChart").getContext("2d");
+            const chartData = {
+              labels: userData.weightHistory.map((d) => d.date),
+              datasets: [
+                {
+                  label: "Weight (kg)",
+                  data: userData.weightHistory.map((d) => d.weight),
+                  borderColor: "rgb(75, 192, 192)",
+                  backgroundColor: "rgba(75, 192, 192, 0.2)",
+                  tension: 0.1,
+                  fill: true,
+                },
+              ],
+            };
+            const chartOptions = {
+              responsive: true,
+              plugins: {
+                legend: { position: "top" },
+                title: { display: true, text: "Weekly Weight Progress" },
+              },
+              scales: {
+                y: {
+                  beginAtZero: false,
+                  title: { display: true, text: "Weight (kg)" },
+                },
+                x: { title: { display: true, text: "Date" } },
+              },
+            };
+            new Chart(ctx, {
+              type: "line",
+              data: chartData,
+              options: chartOptions,
             });
-        }
+          } catch (err) {
+            console.error("Chart initialization failed:", err);
+          }
+        }, [userData.weightHistory]);
 
-        function backToDashboard() {
-            hideAllPages();
-            document.getElementById('dashboard').classList.remove('hidden');
-        }
+        const handleWorkoutSubmit = (e) => {
+          e.preventDefault();
+          console.log("Workout form submitted:", workoutForm);
+          setError("");
+          const name = workoutForm.name.trim();
+          const duration = parseInt(workoutForm.duration);
+          const calories = parseInt(workoutForm.calories);
+          if (!name) {
+            setError("Exercise Name is required.");
+            return;
+          }
+          if (!duration || duration <= 0) {
+            setError("Duration must be a positive number.");
+            return;
+          }
+          if (!calories || calories <= 0) {
+            setError("Calories Burned must be a positive number.");
+            return;
+          }
+          try {
+            setLogs([
+              ...logs,
+              {
+                type: "Workout",
+                ...workoutForm,
+                timestamp: new Date().toLocaleString(),
+              },
+            ]);
+            setUserData({
+              ...userData,
+              caloriesOut: userData.caloriesOut + calories,
+            });
+            setWorkoutForm({ name: "", duration: "", calories: "" });
+            setShowWorkoutModal(false);
+            alert("Workout logged successfully!");
+          } catch (err) {
+            console.error("Workout submission error:", err);
+            setError("Failed to save workout. Please try again.");
+          }
+        };
 
-        // Log Workout & Calculate Burn
-        function logWorkout() {
-            const type = document.getElementById('workoutType').value;
-            const duration = parseInt(document.getElementById('duration').value) || 0;
-            let calPerHour;
-            if (type === 'running') calPerHour = 600;
-            else if (type === 'weightlifting') calPerHour = 400;
-            else calPerHour = 300;
-            workoutCalories = (calPerHour * duration) / 60;
-            userData.dailyBurn += workoutCalories;
-            document.getElementById('burnResult').textContent = `Burned: ${workoutCalories} calories!`;
-            updateReports();
-        }
+        const handleMealSubmit = (e) => {
+          e.preventDefault();
+          console.log("Meal form submitted:", mealForm);
+          setError("");
+          const name = mealForm.name.trim();
+          const calories = parseInt(mealForm.calories);
+          if (!name) {
+            setError("Food Name is required.");
+            return;
+          }
+          if (!calories || calories <= 0) {
+            setError("Calories must be a positive number.");
+            return;
+          }
+          try {
+            setLogs([
+              ...logs,
+              {
+                type: "Meal",
+                ...mealForm,
+                timestamp: new Date().toLocaleString(),
+              },
+            ]);
+            setUserData({
+              ...userData,
+              caloriesIn: userData.caloriesIn + calories,
+            });
+            setMealForm({
+              name: "",
+              calories: "",
+              carbs: "",
+              protein: "",
+              fat: "",
+            });
+            setShowMealModal(false);
+            alert("Meal logged successfully!");
+          } catch (err) {
+            console.error("Meal submission error:", err);
+            setError("Failed to save meal. Please try again.");
+          }
+        };
 
-        // Log Meals & Calculate Intake
-        function logMeals() {
-            const morning = parseInt(document.getElementById('morningCal').value) || 0;
-            const afternoon = parseInt(document.getElementById('afternoonCal').value) || 0;
-            const night = parseInt(document.getElementById('nightCal').value) || 0;
-            userData.dailyIntake = morning + afternoon + night;
-            document.getElementById('intakeResult').textContent = `Total Intake: ${userData.dailyIntake} calories!`;
-            updateReports();
-            // Reset forms
-            document.getElementById('morningCal').value = '';
-            document.getElementById('afternoonCal').value = '';
-            document.getElementById('nightCal').value = '';
-        }
+        return (
+          <div className="p-4 max-w-md mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md min-h-screen">
+            <h1 className="text-2xl font-bold text-center mb-4 text-orange-500 dark:text-orange-400">
+              Fitness & Diet Tracker
+            </h1>
 
-        // Calculate BMR (Harris-Benedict Equation)
-        function calculateBMR() {
-            let bmr;
-            if (userData.gender === 'male') {
-                bmr = 88.362 + (13.397 * userData.weight) + (4.799 * userData.height) - (5.677 * userData.age);
-            } else if (userData.gender === 'female') {
-                bmr = 447.593 + (9.247 * userData.weight) + (3.098 * userData.height) - (4.330 * userData.age);
-            } else {
-                bmr = (88.362 + (13.397 * userData.weight) + (4.799 * userData.height) - (5.677 * userData.age) + 
-                       447.593 + (9.247 * userData.weight) + (3.098 * userData.height) - (4.330 * userData.age)) / 2;
-            }
-            userData.bmr = Math.round(bmr);
-            userData.dailyBurn += userData.bmr; // Add BMR to daily burn
-            document.getElementById('bmrInfo').textContent = `BMR: ${userData.bmr} calories/day.`;
-            updateReports();
-        }
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-green-100 dark:bg-green-700 p-3 rounded text-center">
+                <h2 className="text-lg font-semibold">Calories In</h2>
+                <p className="text-2xl">{userData.caloriesIn}</p>
+              </div>
+              <div className="bg-red-100 dark:bg-red-700 p-3 rounded text-center">
+                <h2 className="text-lg font-semibold">Calories Out</h2>
+                <p className="text-2xl">{userData.caloriesOut}</p>
+              </div>
+              <div className="bg-blue-100 dark:bg-blue-700 p-3 rounded text-center">
+                <h2 className="text-lg font-semibold">Weight</h2>
+                <p className="text-2xl">{userData.weight}kg</p>
+              </div>
+              <div className="bg-purple-100 dark:bg-purple-700 p-3 rounded text-center">
+                <h2 className="text-lg font-semibold">Steps</h2>
+                <p className="text-2xl">{userData.steps.toLocaleString()}</p>
+              </div>
+            </div>
 
-        function updateReports() {
-            document.getElementById('profileInfo').innerHTML = `
-                Age: ${userData.age}, Gender: ${userData.gender}, Height: ${userData.height}cm, Weight: ${userData.weight}kg<br>
-                Goal Weight: ${userData.goalWeight}kg
-            `;
-            document.getElementById('totalIntake').textContent = userData.dailyIntake;
-            document.getElementById('totalBurn').textContent = userData.dailyBurn;
-            const net = userData.dailyIntake - userData.dailyBurn;
-            document.getElementById('netCalories').textContent = net > 0 ? `+${net}` : net;
-        }
+            {/* Progress Chart */}
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold mb-2">Weight Progress</h2>
+              <canvas id="weightChart" className="w-full"></canvas>
+            </div>
 
-        function updateGoals() {
-            hideAllPages();
-            document.getElementById('goalsPage').classList.remove('hidden');
-            document.getElementById('currentWeight').textContent = userData.weight;
-        }
+            {/* Recent Logs */}
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold mb-2">Recent Logs</h2>
+              <ul className="space-y-2">
+                {logs.slice(-3).map((log, index) => (
+                  <li
+                    key={index}
+                    className="bg-gray-50 dark:bg-gray-700 p-2 rounded"
+                  >
+                    <span className="font-semibold">{log.type}</span>:{" "}
+                    {log.name} at {log.timestamp}
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-        function saveGoals() {
-            userData.goalWeight = parseInt(document.getElementById('goalWeight').value) || userData.weight;
-            alert('Goals updated!');
-            backToDashboard();
-        }
+            {/* Quick Actions */}
+            <div className="space-y-2">
+              <button
+                onClick={() => setShowWorkoutModal(true)}
+                className="w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600 btn-hover"
+              >
+                Log Workout
+              </button>
+              <button
+                onClick={() => setShowMealModal(true)}
+                className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600 btn-hover"
+              >
+                Log Meal
+              </button>
+            </div>
 
-        function logout() {
-            isLoggedIn = false;
-            userData = { dailyIntake: 0, dailyBurn: 0, bmr: 0 }; // Reset daily data
-            document.getElementById('dashboard').classList.add('hidden');
-            document.getElementById('loginPage').classList.remove('hidden');
-        }
+            {/* Workout Modal */}
+            {showWorkoutModal && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 modal-backdrop flex items-center justify-center">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-11/12 max-w-md">
+                  <h2 className="text-xl font-bold mb-4">Log Workout</h2>
+                  {error && <p className="error-text">{error}</p>}
+                  <form onSubmit={handleWorkoutSubmit}>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium mb-1">
+                        Exercise Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={workoutForm.name}
+                        onChange={(e) =>
+                          setWorkoutForm({
+                            ...workoutForm,
+                            name: e.target.value,
+                          })
+                        }
+                        className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                        placeholder="e.g., Running"
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium mb-1">
+                        Duration (minutes) *
+                      </label>
+                      <input
+                        type="number"
+                        value={workoutForm.duration}
+                        onChange={(e) =>
+                          setWorkoutForm({
+                            ...workoutForm,
+                            duration: e.target.value,
+                          })
+                        }
+                        className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                        placeholder="e.g., 30"
+                        min="1"
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium mb-1">
+                        Calories Burned *
+                      </label>
+                      <input
+                        type="number"
+                        value={workoutForm.calories}
+                        onChange={(e) =>
+                          setWorkoutForm({
+                            ...workoutForm,
+                            calories: e.target.value,
+                          })
+                        }
+                        className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                        placeholder="e.g., 300"
+                        min="1"
+                      />
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowWorkoutModal(false);
+                          setError("");
+                        }}
+                        className="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded hover:bg-gray-400"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* Meal Modal */}
+            {showMealModal && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 modal-backdrop flex items-center justify-center">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-11/12 max-w-md">
+                  <h2 className="text-xl font-bold mb-4">Log Meal</h2>
+                  {error && <p className="error-text">{error}</p>}
+                  <form onSubmit={handleMealSubmit}>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium mb-1">
+                        Food Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={mealForm.name}
+                        onChange={(e) =>
+                          setMealForm({ ...mealForm, name: e.target.value })
+                        }
+                        className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                        placeholder="e.g., Chicken Salad"
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium mb-1">
+                        Calories *
+                      </label>
+                      <input
+                        type="number"
+                        value={mealForm.calories}
+                        onChange={(e) =>
+                          setMealForm({ ...mealForm, calories: e.target.value })
+                        }
+                        className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                        placeholder="e.g., 400"
+                        min="1"
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium mb-1">
+                        Carbs (g, optional)
+                      </label>
+                      <input
+                        type="number"
+                        value={mealForm.carbs}
+                        onChange={(e) =>
+                          setMealForm({ ...mealForm, carbs: e.target.value })
+                        }
+                        className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                        placeholder="e.g., 50"
+                        min="0"
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium mb-1">
+                        Protein (g, optional)
+                      </label>
+                      <input
+                        type="number"
+                        value={mealForm.protein}
+                        onChange={(e) =>
+                          setMealForm({ ...mealForm, protein: e.target.value })
+                        }
+                        className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                        placeholder="e.g., 30"
+                        min="0"
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium mb-1">
+                        Fat (g, optional)
+                      </label>
+                      <input
+                        type="number"
+                        value={mealForm.fat}
+                        onChange={(e) =>
+                          setMealForm({ ...mealForm, fat: e.target.value })
+                        }
+                        className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                        placeholder="e.g., 15"
+                        min="0"
+                      />
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowMealModal(false);
+                          setError("");
+                        }}
+                        className="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded hover:bg-gray-400"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      // Render React component
+      try {
+        const root = ReactDOM.createRoot(document.getElementById("root"));
+        root.render(<FitnessDashboard />);
+      } catch (err) {
+        console.error("React rendering failed:", err);
+      }
     </script>
-</body>
+  </body>
 </html>
